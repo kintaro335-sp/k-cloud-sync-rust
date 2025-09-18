@@ -1,0 +1,15 @@
+[package]
+name = "k-cloud-sync-rust"
+version = "0.1.0"
+edition = "2024"
+authors = ["kintaro-ponce"]
+[dependencies]
+async-recursion = "1.1.1"
+futures-util = "0.3.31"
+openssl-sys = "0.9.109"
+reqwest = { version = "0.12.23", features = ["stream"] }
+serde = "1.0.219"
+serde_json = "1.0.143"
+thiserror = "2.0.16"
+tokio = { version = "1.47.1", features = ["full"] }
+url = "2.5.7"
