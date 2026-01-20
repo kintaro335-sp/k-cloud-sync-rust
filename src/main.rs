@@ -1,3 +1,9 @@
+/*
+ * k-cloud-sync-rust
+ * Copyright(c) Kintaro Ponce
+ * MIT Licensed
+ */
+
 use tokio;
 
 mod core {
@@ -49,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     for dir in dirs.iter() {
       match core::engine::sync_files(&dir, &api_client).await {
-        Ok(_) => println!("Sync finished"),
+        Ok(message) => println!("{}", message),
         Err(err) => println!("Error: {}", err),
       }
     }

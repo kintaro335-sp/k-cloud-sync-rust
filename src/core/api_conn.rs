@@ -1,15 +1,25 @@
-use reqwest::{Client, StatusCode};
-use std::os::unix::fs::FileExt;
+/*
+ * k-cloud-frontend
+ * Copyright(c) Kintaro Ponce
+ * MIT Licensed
+ */
+use reqwest::{Client, StatusCode, multipart};
+use std::{os::unix::fs::FileExt};
 use std::time::Duration;
 use thiserror::Error;
-use std::fs::File;
+use std::fs;
 use std::io::Write;
 use futures_util::StreamExt;
 use url::Url;
 mod objects {
-  pub use crate::core::objects::{User, FileList, FileProperties};
+  pub use crate::core::objects::{User, FileList, FileProperties, ExistFile};
 }
+use crate::core::objects::{User, FileList, FileProperties, ExistFile, SizeBody};
+use tokio::{
+    io::{BufReader, AsyncReadExt},
+};
 
+const CHUNK_SIZE: usize = 100 * 1024 * 1024;
 
 /// Errores de tu capa HTTP/cliente.
 #[derive(Debug, Error)]
@@ -22,6 +32,9 @@ pub enum ApiError {
 
     #[error("URL inválida: {0}")]
     Url(#[from] url::ParseError),
+
+    #[error("IO Error")]
+    IOError(#[from] std::io::Error),
 
     #[error("status HTTP inesperado {status}: {snippet}")]
     HttpStatus {
@@ -113,7 +126,7 @@ impl ApiClient {
       Ok(files) 
     }
 
-    pub async fn get_file(&self, path: &str, mut file: &File) -> Result<&str, ApiError> {
+    pub async fn get_file(&self, path: &str, mut file: &fs::File) -> Result<&str, ApiError> {
       let mut url = self.base.clone();
       url.path_segments_mut()
           .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
@@ -141,6 +154,114 @@ impl ApiClient {
       Ok("okay")
     }
 
+  pub async fn exists_file(&self, path: &str) -> Result<ExistFile, ApiError> {
+    let mut url = self.base.clone();
+    url.path_segments_mut()
+        .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
+        .extend(&["files", "exists", path]);
+    let resp= self.http.get(url.to_string()+"?t="+&self.api_key).send().await.unwrap();
+
+    // status
+    let status = resp.status();
+    if !status.is_success() {
+      let body = resp.text().await.unwrap();
+      let snippet = body.chars().take(200).collect::<String>();
+      return Err(ApiError::HttpStatus { status, snippet });
+    }
+    let body = resp.text().await.unwrap();
+
+    let files: objects::ExistFile = serde_json::from_str(&body)?;
+    Ok(files)
+  }
+  
+  pub async fn create_folder(&self, path: &str) -> Result<&str, ApiError> {
+    let mut url = self.base.clone();
+    url.path_segments_mut()
+        .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
+        .extend(&["files", "folder", path]);
+    let resp= self.http.post(url.to_string()+"?t="+&self.api_key).send().await.unwrap(); 
+
+    // status
+    let status = resp.status();
+    if !status.is_success() {
+      let body = resp.text().await.unwrap();
+      let snippet = body.chars().take(200).collect::<String>();
+      return Err(ApiError::HttpStatus { status, snippet });
+    }
+
+    Ok("okay")
+  }
+
+  pub async fn initialize_file(&self, path: &str, size: usize) -> Result<&str, ApiError> {
+    let mut url = self.base.clone();
+    url.path_segments_mut()
+        .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
+        .extend(&["files", "initialize", path]);
+
+    let size_body = SizeBody {
+      size: size
+    };
+    let resp = self.http.post(url.to_string()+"?t="+&self.api_key).json(&size_body).send().await.unwrap();  
+
+    // status
+    let status = resp.status();
+    if !status.is_success() {
+      let body = resp.text().await.unwrap();
+      let snippet = body.chars().take(200).collect::<String>();
+      return Err(ApiError::HttpStatus { status, snippet });
+    }
+
+    Ok("okay")
+  }
+
+  pub async fn upload_file_chunks(&self, remote_path: &str, path_local: &String, size: usize) -> Result<&str, ApiError> {
+    let mut url = self.base.clone();
+    url.path_segments_mut()
+        .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
+        .extend(&["files", "write", remote_path]);
+    let file = tokio::fs::File::open(&path_local).await?;
+    let mut reader = BufReader::with_capacity(CHUNK_SIZE, file);
+
+    let mut offset: usize = 0;
+
+    loop {
+      let position_str = format!("{}", offset);
+      
+      let mut buffer;
+      if size > CHUNK_SIZE && size - offset < CHUNK_SIZE {
+        buffer = vec![0u8; CHUNK_SIZE];
+      } else {
+        buffer = vec![0u8; size as usize];
+      }
+
+      let bytes_read = reader.read(&mut buffer).await?;
+
+      if bytes_read == 0 {
+          break; // EOF
+      }
+
+      let part = multipart::Part::stream(buffer)
+        .file_name("file")
+        .mime_str("application/octet-stream").unwrap();
+
+      let form = multipart::Form::new().part("file", part);
+      
+      let resp= self.http.post(url.to_string()+"?t="+&self.api_key+"&pos="+&position_str).multipart(form).send().await.unwrap();  
     
+      offset += bytes_read;
+      // status
+      let status = resp.status();
+      if !status.is_success() {
+        let body = resp.text().await.unwrap();
+        let snippet = body.chars().take(200).collect::<String>();
+        return Err(ApiError::HttpStatus { status, snippet });
+      }
+
+      
+    }
+
+    Ok("okay")
+  }
+
 
 }

@@ -1,3 +1,8 @@
+/*
+ * k-cloud-frontend
+ * Copyright(c) Kintaro Ponce
+ * MIT Licensed
+ */
 use std::fs;
 use std::string::String;
 use serde::{de::Error};

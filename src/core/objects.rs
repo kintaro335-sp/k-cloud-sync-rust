@@ -1,4 +1,9 @@
-use serde::{Deserialize};
+/*
+ * k-cloud-frontend
+ * Copyright(c) Kintaro Ponce
+ * MIT Licensed
+ */
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct Dirsync {
@@ -44,4 +49,14 @@ pub struct FileProperties {
   // pub size: i128,
   // pub extension: String,
   // pub mime_type: String
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExistFile {
+  pub exists: bool
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SizeBody {
+  pub size: usize
 }
