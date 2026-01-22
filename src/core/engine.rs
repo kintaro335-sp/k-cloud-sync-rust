@@ -54,10 +54,17 @@ async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, vi
   Ok(())
 }
 
-async fn upload_file(api_client: &api_conn::ApiClient, local_path: &String, remote_path: &String, size: usize) {
+async fn upload_file(api_client: &api_conn::ApiClient, local_path: &String, remote_path: &String, size: u64) {
   println!("uploading");
-  let _ = api_client.initialize_file(remote_path, size).await.unwrap();
-  let _ = api_client.upload_file_chunks(remote_path, local_path, size).await.unwrap();
+  let initialize_result = api_client.initialize_file(remote_path, size).await;
+  match initialize_result {
+      Ok(_) => {
+        let _ = api_client.upload_file_chunks(remote_path, local_path, size).await.unwrap();
+      },
+      Err(err) => {
+        println!("{}", err);
+      }
+  }
 }
 
 #[async_recursion]
@@ -85,7 +92,7 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
 
     let file_properties = file_conn::open_file(&virtual_local_path).metadata().unwrap();
     let is_dir = file_properties.is_dir();
-    
+    let file_size = file_conn::get_file_size(local_path_file).unwrap();
     let exists_file_remote = api_client.exists_file(&remote_path_file).await.unwrap();
 
     if !is_dir {
@@ -95,7 +102,7 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
       let _ = send_files(dirs, api_client, &file).await.unwrap();
     } else {
       if !exists_file_remote.exists {
-        let _ = upload_file(api_client, &local_path_file, &remote_path_file, file_properties.size() as usize).await;
+        let _ = upload_file(api_client, &local_path_file, &remote_path_file, file_size).await;
       }
     }
   }

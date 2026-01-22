@@ -58,5 +58,5 @@ pub struct ExistFile {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SizeBody {
-  pub size: usize
+  pub size: u64
 }

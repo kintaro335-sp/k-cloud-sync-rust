@@ -3,10 +3,11 @@
  * Copyright(c) Kintaro Ponce
  * MIT Licensed
  */
-use std::{fs::read_dir, fs::File};
+use std::{fs::read_dir, fs::File, fs::metadata};
 use std::path::Path;
-// use std::io::Cursor;
+use std::io;
 // use std::io::copy;
+// use filesize::PathExt;
 
 pub fn file_list(path: &str) -> Vec<String> {
   let mut list : Vec<String> = Vec::new();
@@ -35,6 +36,15 @@ pub fn open_file(path: &str) -> File {
   return File::open(path).unwrap()
 }
 
+pub fn get_file_size(path: &str) -> io::Result<u64> {
+  //let path = Path::new(path);
+  // let metadata = path.symlink_metadata()?;
+
+  //let realsize:u64 = path.size_on_disk_fast(&metadata)?;
+  let metadata = metadata(path)?;
+  let realsize = metadata.len();
+  Ok(realsize)
+}
 
 // pub fn save_file(path: &str, content: &Cursor<Vec<u8>>) {
 //   let mut file = std::fs::File::create(path).unwrap();
