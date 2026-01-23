@@ -32,8 +32,14 @@ pub fn create_file_stream(path: &str) -> File {
   return File::create(path).unwrap();
 }
 
-pub fn open_file(path: &str) -> File {
-  return File::open(path).unwrap()
+// pub fn open_file(path: &str) -> File {
+//   return File::open(path).unwrap()
+// }
+
+pub fn is_dir(path: &str) -> io::Result<bool> {
+  let metadata = metadata(path)?;
+  let is_dir = metadata.is_dir();
+  Ok(is_dir)
 }
 
 pub fn get_file_size(path: &str) -> io::Result<u64> {

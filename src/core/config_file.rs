@@ -12,8 +12,8 @@ mod objects {
 }
 
 
-pub fn load_config() -> Result<objects::Configfile> {
-  let raw_json: String = fs::read_to_string("dirs.json").expect("Unable to read file");
+pub fn load_config(file_name: &String) -> Result<objects::Configfile> {
+  let raw_json: String = fs::read_to_string(file_name).expect("Unable to read file");
   let info: objects::Configfile = serde_json::from_str(&raw_json)?;
   let mut valid: bool = true;
   if info.base_url.trim().is_empty() {

@@ -5,6 +5,7 @@
  */
 
 use tokio;
+use std::env;
 
 mod core {
     pub mod objects;
@@ -18,7 +19,16 @@ mod core {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config: core::objects::Configfile = core::config_file::load_config().expect("Unable to load config");
+    let mut config_file: String = String::from("config.json");
+    for (i, arg) in env::args().enumerate() {
+      if i == 1 {
+        println!("{}", arg);
+        config_file = arg;
+        break;
+      }
+    }
+
+    let config: core::objects::Configfile = core::config_file::load_config(&config_file).expect("Unable to load config");
 
     let base_url = config.base_url;
     let api_key = config.api_key;

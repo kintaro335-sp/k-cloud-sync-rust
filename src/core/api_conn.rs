@@ -232,8 +232,6 @@ impl ApiClient {
         position_str = format!("{}", offset);
       }
 
-      println!("position:{}", &position_str);
-
       let mut buffer = vec![0u8; CHUNK_SIZE as usize];
       if size > CHUNK_SIZE && size - offset < CHUNK_SIZE {
         buffer = vec![0u8; (size - offset) as usize];
@@ -264,7 +262,6 @@ impl ApiClient {
         return Err(ApiError::HttpStatus { status, snippet });
       }
 
-      
     }
 
     Ok("okay")
