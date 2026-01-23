@@ -7,7 +7,7 @@
 use tokio;
 use std::env;
 
-mod core {
+pub mod core {
     pub mod objects;
     pub mod config_file;
     pub mod file_conn;

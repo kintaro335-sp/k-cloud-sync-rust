@@ -5,12 +5,9 @@
  */
 use crate::core::{file_conn, utils::{self}};
 use async_recursion::async_recursion;
-mod objects {
-  pub use crate::core::objects::{Dirsync};
-}
-mod api_conn {
-  pub use crate::core::api_conn::ApiClient;
-}
+pub use crate::core::objects;
+pub use crate::core::api_conn;
+
 
 #[async_recursion]
 async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, virtual_path: &str) -> Result<(), Box<dyn std::error::Error>> {

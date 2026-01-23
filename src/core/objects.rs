@@ -60,3 +60,9 @@ pub struct ExistFile {
 pub struct SizeBody {
   pub size: u64
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ScopesResp {
+  pub r#type: String,
+  pub scopes: Vec<String>
+}

@@ -4,9 +4,13 @@
  * MIT Licensed
  */
 use std::path::Path;
+use crate::core::objects::ScopesResp;
 
 pub fn create_path(virtual_path: &str, dir_name: &str) -> String {
   return Path::new(virtual_path).join(dir_name).display().to_string();
   // return format!("{}/{}", virtual_path, dir_name);
 }
 
+pub fn is_authorized(scopes: &ScopesResp) {
+  
+}

@@ -7,9 +7,7 @@ use std::fs;
 use std::string::String;
 use serde::{de::Error};
 use serde_json::{Result};
-mod objects {
-  pub use crate::core::objects::{Configfile};
-}
+pub use crate::core::objects;
 
 
 pub fn load_config(file_name: &String) -> Result<objects::Configfile> {

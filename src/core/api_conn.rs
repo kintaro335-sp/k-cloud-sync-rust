@@ -11,10 +11,7 @@ use std::fs;
 use std::io::Write;
 use futures_util::StreamExt;
 use url::Url;
-mod objects {
-  pub use crate::core::objects::{User, FileList, FileProperties, ExistFile};
-}
-use crate::core::objects::{ExistFile, SizeBody};
+pub use crate::core::objects;
 use tokio::{
     io::{BufReader, AsyncReadExt},
 };
@@ -88,6 +85,26 @@ impl ApiClient {
       Ok(user)
     }
 
+    pub async fn get_api_scopes(&self) -> Result<objects::ScopesResp, ApiError> {
+      let mut url = self.base.clone();
+      url.path_segments_mut()
+          .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
+          .extend(&["auth", "scopes"]);
+
+      let resp = self.http.get(url.to_string()+"?t="+&self.api_key).send().await?;
+      let status = resp.status();
+      let body = resp.text().await?;
+
+      if !status.is_success() {
+        let snippet = body.chars().take(200).collect::<String>();
+        return Err(ApiError::HttpStatus { status, snippet });
+      }
+
+      // Aquí usamos serde_json manualmente
+      let scopes: objects::ScopesResp = serde_json::from_str(&body)?;
+      Ok(scopes)
+    }
+
     pub async fn get_file_properties(&self, path: &str) -> Result<objects::FileProperties, ApiError> {
       let mut url = self.base.clone();
       url.path_segments_mut()
@@ -154,7 +171,7 @@ impl ApiClient {
       Ok("okay")
     }
 
-  pub async fn exists_file(&self, path: &str) -> Result<ExistFile, ApiError> {
+  pub async fn exists_file(&self, path: &str) -> Result<objects::ExistFile, ApiError> {
     let mut url = self.base.clone();
     url.path_segments_mut()
         .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
@@ -198,7 +215,7 @@ impl ApiClient {
         .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
         .extend(&["files", "initialize", path]);
 
-    let size_body = SizeBody {
+    let size_body = objects::SizeBody {
       size: size
     };
     let resp = self.http.post(url.to_string()+"?t="+&self.api_key).json(&size_body).send().await.unwrap();  
@@ -224,13 +241,7 @@ impl ApiClient {
     let mut offset: u64 = 0;
 
     loop {
-      let position_str: String;      
-
-      if offset == 0 {
-        position_str = format!("{}", offset);
-      } else {
-        position_str = format!("{}", offset);
-      }
+      let position_str: String = format!("{}", offset);
 
       let mut buffer = vec![0u8; CHUNK_SIZE as usize];
       if size > CHUNK_SIZE && size - offset < CHUNK_SIZE {
