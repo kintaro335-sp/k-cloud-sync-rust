@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 use std::path::Path;
-use crate::core::objects::ScopesResp;
+use crate::core::objects::{ScopesResp, FileList};
 
 pub fn create_path(virtual_path: &str, dir_name: &str) -> String {
   return Path::new(virtual_path).join(dir_name).display().to_string();
@@ -21,4 +21,16 @@ pub fn is_authorized(scopes: &ScopesResp) -> bool {
     }
   }
   scopes_needed_found >= 2
+}
+
+pub fn exists_file_remote(files_list: &FileList, file_name: &String) -> bool {
+  let list = &files_list.list;
+
+  for f in list {
+    if f.name == *file_name {
+      return true
+    }
+  }
+
+  false
 }

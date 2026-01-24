@@ -81,6 +81,7 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
   }
   
   let files_local_list = file_conn::file_list(&virtual_local_path);
+  let files_remote_list = api_client.get_files_list(&virtual_remote_path).await.unwrap();
 
   for file in files_local_list {
 
@@ -89,16 +90,16 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
 
     let is_dir = file_conn::is_dir(local_path_file).unwrap();
     let file_size = file_conn::get_file_size(local_path_file).unwrap();
-    let exists_file_remote = api_client.exists_file(&remote_path_file).await.unwrap();
+    let exists_file_remote = utils::exists_file_remote(&files_remote_list, &file);
 
     if is_dir {
-      if !exists_file_remote.exists {
+      if !exists_file_remote {
         api_client.create_folder(&remote_path_file).await.unwrap();
         println!("dir created {}",utils::create_path(virtual_path, &file));
       }
       let _ = send_files(dirs, api_client, &file).await.unwrap();
     } else {
-      if !exists_file_remote.exists {
+      if !exists_file_remote {
         println!("uploading {}",utils::create_path(virtual_path, &file));
         let _ = upload_file(api_client, &local_path_file, &remote_path_file, file_size).await;
         println!("uploaded  {}",utils::create_path(virtual_path, &file));

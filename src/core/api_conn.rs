@@ -50,7 +50,7 @@ pub struct ApiClient {
 impl ApiClient {
     pub fn new(base_url: &str, api_key: &str) -> Result<Self, ApiError> {
         let http = Client::builder()
-            .timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(60))
             .connect_timeout(Duration::from_secs(5))
             // .user_agent("mi-app/0.1") // opcional
             .build()?;
