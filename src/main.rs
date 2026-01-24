@@ -4,7 +4,6 @@
  * MIT Licensed
  */
 
-use futures_util::future::err;
 use tokio;
 use std::env;
 
