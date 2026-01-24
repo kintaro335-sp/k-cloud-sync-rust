@@ -4,11 +4,16 @@
  * MIT Licensed
  */
 use std::fs;
+use std::io;
 use std::string::String;
 use serde::{de::Error};
 use serde_json::{Result};
 pub use crate::core::objects;
 
+pub fn exists_file(file_name: &String) -> io::Result<bool> {
+  let exist = fs::exists(file_name)?;
+  Ok(exist)
+}
 
 pub fn load_config(file_name: &String) -> Result<objects::Configfile> {
   let raw_json: String = fs::read_to_string(file_name).expect("Unable to read file");
