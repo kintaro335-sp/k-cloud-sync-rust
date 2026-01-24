@@ -4,6 +4,7 @@
  * MIT Licensed
  */
 
+use futures_util::future::err;
 use tokio;
 use std::env;
 
@@ -36,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match exist_result {
         Ok(exist_config) => exist_config_file = exist_config,
         Err(error) => {
-          println!("error verifying file existence");
+          println!("error verifying file existence {}", error);
           return Ok(())
         }
     }
