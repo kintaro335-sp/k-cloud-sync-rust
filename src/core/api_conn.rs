@@ -11,7 +11,8 @@ use std::fs;
 use std::io::Write;
 use futures_util::StreamExt;
 use url::Url;
-pub use crate::core::objects;
+use crate::utils;
+use crate::core::objects;
 use tokio::{
     io::{BufReader, AsyncReadExt},
 };
@@ -231,14 +232,17 @@ impl ApiClient {
     Ok("okay")
   }
 
-  pub async fn upload_file_chunks(&self, remote_path: &str, path_local: &String, size: u64) -> Result<&str, ApiError> {
+  pub async fn upload_file_chunks(&self, remote_path: &str, path_local: &String, size: u64, virtual_path: &String) -> Result<&str, ApiError> {
     let mut url = self.base.clone();
     url.path_segments_mut()
         .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
         .extend(&["files", "write", remote_path]);
     let file = tokio::fs::File::open(&path_local).await?;
     let mut reader = BufReader::with_capacity(CHUNK_SIZE as usize, file);
+    let mut percentage: f32 = 0.0;
     let mut offset: u64 = 0;
+
+    println!("Uploading {} ({}%)",virtual_path,format!("{}",percentage));
 
     loop {
       let position_str: String = format!("{}", offset);
@@ -265,6 +269,9 @@ impl ApiClient {
       let resp= self.http.post(url.to_string()+"?t="+&self.api_key+"&pos="+&position_str).multipart(form).send().await.unwrap();  
 
       offset += bytes_read as u64;
+
+      percentage = utils::calc_file_uploaded(offset, size);
+      println!("Uploading {} ({}%)",virtual_path,format!("{}",percentage));
       // status
       let status = resp.status();
       if !status.is_success() {

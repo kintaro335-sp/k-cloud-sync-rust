@@ -34,3 +34,14 @@ pub fn exists_file_remote(files_list: &FileList, file_name: &String) -> bool {
 
   false
 }
+
+pub fn calc_file_uploaded(bytes_uploaded: u64, size: u64) -> f32 {
+  if bytes_uploaded == 0 {
+    return 0_f32
+  }
+  let bytes_uploaded_f:f32 = bytes_uploaded as f32;
+  let size_f:f32 = size as f32;
+  let percentage_decimal: f32 = bytes_uploaded_f / size_f;
+  let percentage = percentage_decimal * 100_f32;
+  percentage
+}

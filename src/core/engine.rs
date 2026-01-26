@@ -52,11 +52,11 @@ async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, vi
   Ok(())
 }
 
-async fn upload_file(api_client: &api_conn::ApiClient, local_path: &String, remote_path: &String, size: u64) {
+async fn upload_file(api_client: &api_conn::ApiClient, local_path: &String, remote_path: &String, size: u64, virtual_path: &String) {
   let initialize_result = api_client.initialize_file(remote_path, size).await;
   match initialize_result {
       Ok(_) => {
-        let _ = api_client.upload_file_chunks(remote_path, local_path, size).await.unwrap();
+        let _ = api_client.upload_file_chunks(remote_path, local_path, size, virtual_path).await.unwrap();
       },
       Err(err) => {
         println!("{}", err);
@@ -84,7 +84,7 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
   let files_remote_list = api_client.get_files_list(&virtual_remote_path).await.unwrap();
 
   for file in files_local_list {
-
+    let virtual_path_file = &utils::create_path(virtual_path, &file);
     let local_path_file = &utils::create_path(&virtual_local_path, &file);
     let remote_path_file = &utils::create_path(&virtual_remote_path, &file);
 
@@ -100,9 +100,9 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
       let _ = send_files(dirs, api_client, &file).await.unwrap();
     } else {
       if !exists_file_remote {
-        println!("uploading {}",utils::create_path(virtual_path, &file));
-        let _ = upload_file(api_client, &local_path_file, &remote_path_file, file_size).await;
-        println!("uploaded  {}",utils::create_path(virtual_path, &file));
+        println!("uploading {}",virtual_path_file);
+        let _ = upload_file(api_client, &local_path_file, &remote_path_file, file_size, virtual_path_file).await;
+        println!("uploaded  {}",virtual_path_file);
       }
     }
   }
