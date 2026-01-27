@@ -14,6 +14,11 @@ async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, vi
   let local_path = &dirs.local_path;
   let remote_path = &dirs.remote_path;
 
+  if !file_conn::file_exists(&local_path) && virtual_path == "" {
+    file_conn::create_dir(&local_path);
+    println!("dir created {}",local_path);
+  }
+
   let virtual_local_path: String;
   let virtual_remote_path: String;
 
@@ -44,6 +49,8 @@ async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, vi
         let _ = api_client.get_file(&file_virtual_path_server, &mut file_local).await;
         println!("downloaded  {}",utils::create_path(virtual_path, &file.name));
         // drop(file_local);
+      } else {
+        println!("found {}",utils::create_path(virtual_path, &file.name));
       }
       // println!("{} -> {}\n", file_virtual_path_server, file_virtual_path_local);
     }
@@ -103,6 +110,8 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
         println!("uploading {}",virtual_path_file);
         let _ = upload_file(api_client, &local_path_file, &remote_path_file, file_size, virtual_path_file).await;
         println!("uploaded  {}",virtual_path_file);
+      } else {
+        println!("found     {}",virtual_path_file);
       }
     }
   }
