@@ -5,7 +5,7 @@
  */
 use reqwest::{Client, StatusCode, multipart};
 use std::{os::unix::fs::FileExt};
-use std::time::Duration;
+// use std::time::Duration;
 use thiserror::Error;
 use std::fs;
 use std::io::Write;
@@ -208,6 +208,23 @@ impl ApiClient {
     }
 
     Ok("okay")
+  }
+
+  pub async fn upload_small_file(&self, remote_path: &str, path_local: &String) -> Result<&str, ApiError> {
+    let mut url = self.base.clone();
+    url.path_segments_mut()
+        .map_err(|_| url::ParseError::SetHostOnCannotBeABaseUrl)?
+        .extend(&["files", "upload", remote_path]);
+    let file = tokio::fs::File::open(&path_local).await?;
+    let file_stream = multipart::Part::stream(file)
+        .file_name("file")
+        .mime_str("application/octet-stream").unwrap();
+
+    let form = multipart::Form::new().part("file", file_stream);
+      
+    let _ = self.http.post(url.to_string()+"?t="+&self.api_key).multipart(form).send().await.unwrap(); 
+
+    return Ok("okay")
   }
 
   pub async fn initialize_file(&self, path: &str, size: u64) -> Result<&str, ApiError> {

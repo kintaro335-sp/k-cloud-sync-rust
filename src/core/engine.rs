@@ -60,6 +60,12 @@ async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, vi
 }
 
 async fn upload_file(api_client: &api_conn::ApiClient, local_path: &String, remote_path: &String, size: u64, virtual_path: &String) {
+  if size < 104857600 {
+    let _ = api_client.upload_small_file(remote_path, local_path).await.unwrap();
+
+    return ()
+  }
+
   let initialize_result = api_client.initialize_file(remote_path, size).await;
   match initialize_result {
       Ok(_) => {
