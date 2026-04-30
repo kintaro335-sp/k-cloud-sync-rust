@@ -5,9 +5,8 @@
  */
 
 use tokio;
-use std::env;
 
-use crate::core::utils;
+use crate::core::{args_parse, utils};
 
 pub mod core {
     pub mod objects;
@@ -16,18 +15,16 @@ pub mod core {
     pub mod api_conn;
     pub mod engine;
     pub mod utils;
+    pub mod args_parse;
 }
 
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut config_file: String = String::from("config.json");
-    for (i, arg) in env::args().enumerate() {
-      if i == 1 {
-        println!("{}", arg);
-        config_file = arg;
-        break;
-      }
+    let args_input = args_parse::get_args_input();
+    if args_input.file != "" {
+      config_file = args_input.file;
     }
 
     let exist_config_file: bool;
@@ -45,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
       return Ok(())
     }
 
-    let config: core::objects::Configfile = core::config_file::load_config(&config_file).expect("Unable to load config");
+    let config: core::objects::Configfile = core::config_file::load_config(&config_file).expect("Unable to load config: invalid file");
 
     let base_url = config.base_url;
     let api_key = config.api_key;
@@ -89,13 +86,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("Syncing files...");
-    
-    for dir in dirs.iter() {
-      match core::engine::sync_files(&dir, &api_client).await {
-        Ok(message) => println!("{}", message),
-        Err(err) => println!("Error: {}", err),
-      }
+
+    match args_input.mode.as_str() {
+      "all" => {
+        for dir in dirs.iter() {
+          match core::engine::sync_files(&dir, &api_client).await {
+            Ok(message) => println!("{}", message),
+            Err(err) => println!("Error: {}", err),
+          }
+        }
+      },
+      "single" => {
+        let dir = dirs.get(args_input.dir as usize);
+        match dir {
+            Some(dir_f) => {
+              match core::engine::sync_files(&dir_f, &api_client).await {
+                Ok(message) => println!("{}", message),
+                Err(err) => println!("Error: {}", err),
+              }
+            },
+            None => {
+              println!("this dir does not exixts");
+            }
+        }
+      },
+      _ => {}
     }
+    
+    
 
     Ok(())
 }
