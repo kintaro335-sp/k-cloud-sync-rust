@@ -59,10 +59,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => {}
     }
 
-    if args_input.action == "list" {
-      
-    }
-
     let base_url = config.base_url;
     let api_key = config.api_key;
     let dirs = config.dirs;
