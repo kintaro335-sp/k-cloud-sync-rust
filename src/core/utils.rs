@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 use std::path::Path;
-use crate::core::objects::{ScopesResp, FileList};
+use crate::core::objects::{ScopesResp, FileList, Dirsync};
 
 pub fn create_path(virtual_path: &str, dir_name: &str) -> String {
   return Path::new(virtual_path).join(dir_name).display().to_string();
@@ -44,4 +44,12 @@ pub fn calc_file_uploaded(bytes_uploaded: u64, size: u64) -> f32 {
   let percentage_decimal: f32 = bytes_uploaded_f / size_f;
   let percentage = percentage_decimal * 100_f32;
   percentage
+}
+
+pub fn display_dirs_list(dirs_list: &Vec<Dirsync>) {
+  println!("list:");
+  for (i, dir) in dirs_list.iter().enumerate() {
+    println!("{}. local:{}", i,dir.local_path);
+    println!("   remote:{}",dir.remote_path);
+  }
 }
