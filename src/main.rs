@@ -55,6 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         "help" => {
           utils::display_help();
+          return Ok(())
         },
         _ => {}
     }
