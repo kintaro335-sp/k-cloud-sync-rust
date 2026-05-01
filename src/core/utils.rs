@@ -49,8 +49,9 @@ pub fn calc_file_uploaded(bytes_uploaded: u64, size: u64) -> f32 {
 pub fn display_dirs_list(dirs_list: &Vec<Dirsync>) {
   println!("list:");
   for (i, dir) in dirs_list.iter().enumerate() {
-    println!("{}. local:{}", i,dir.local_path);
-    println!("   remote:{}",dir.remote_path);
+    println!("{}. {}", i, dir.sync_mode);
+    println!("  local:{}", dir.local_path);
+    println!(" remote:{}", dir.remote_path);
   }
 }
 
