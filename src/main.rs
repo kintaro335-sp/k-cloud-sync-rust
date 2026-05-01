@@ -44,9 +44,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config: core::objects::Configfile = core::config_file::load_config(&config_file).expect("Unable to load config: invalid file");
 
+    match args_input.action.as_str() {
+        "list" => {
+          utils::display_dirs_list(&config.dirs);
+          return Ok(())
+        },
+        "usage" => {
+          utils::display_help();
+          return Ok(())
+        },
+        "help" => {
+          utils::display_help();
+        },
+        _ => {}
+    }
+
     if args_input.action == "list" {
-      utils::display_dirs_list(&config.dirs);
-      return Ok(())
+      
     }
 
     let base_url = config.base_url;

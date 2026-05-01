@@ -6,6 +6,8 @@
 use std::env;
 use std::process;
 
+use crate::core::utils;
+
 pub struct ArgsInput {
   pub action: String,
   pub mode: String,
@@ -48,8 +50,15 @@ fn validate_action_option(action_input: &String) -> String {
       "list" => {
         return action_input.clone();
       },
+      "usage" => {
+        return action_input.clone();
+      },
+      "help" => {
+        return action_input.clone();
+      },
       _ => {
         println!("Error: invalid option");
+        utils::display_help();
         process::exit(1);
       }
   }
@@ -57,6 +66,11 @@ fn validate_action_option(action_input: &String) -> String {
 
 pub fn get_args_input() -> ArgsInput {
   let args = env::args().enumerate();
+
+  if args.len() < 3 {
+    println!("Error: not enough arguments");
+    process::exit(1);
+  }
 
   let mut args_input = ArgsInput {
     action: String::from("sync"),
@@ -81,7 +95,7 @@ pub fn get_args_input() -> ArgsInput {
             args_input.mode = String::from("single");
             args_input.dir = value_num.value;
           } else {
-            println!("Error: invalid option.");
+            println!("Error: invalid dir option");
             process::exit(1);
           }
         },

@@ -53,3 +53,13 @@ pub fn display_dirs_list(dirs_list: &Vec<Dirsync>) {
     println!("   remote:{}",dir.remote_path);
   }
 }
+
+pub fn display_help() {
+  println!("usage:");
+  println!("./app [action] [file] [dir]");
+  println!("actions:");
+  println!("1. list: show list of dirs");
+  println!("2. sync: sync files");
+  println!("file: file name");
+  println!("dir: optional dir index only if you want to sync one dir");
+}
