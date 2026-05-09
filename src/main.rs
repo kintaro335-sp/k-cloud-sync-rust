@@ -21,6 +21,8 @@ pub mod core {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let version_str = include_str!("./version.txt");
+    println!("k-cloud-sync-rust v{}", version_str);
     let mut config_file: String = String::from("config.json");
     let args_input = args_parse::get_args_input();
     if args_input.file != "" {

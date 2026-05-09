@@ -586,7 +586,7 @@ dependencies = [
 
 [[package]]
 name = "k-cloud-sync-rust"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-recursion",
  "futures-util",
