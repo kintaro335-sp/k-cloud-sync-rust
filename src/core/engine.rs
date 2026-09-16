@@ -239,14 +239,16 @@ async fn sync_file(file_info: &objects::FileObj, api_client: &api_conn::ApiClien
     match file_info.r#type.as_str() {
         "file" => {
           if !file_exists.exists {
+            println!("uploading file  {}", file_info.remote_path);
             upload_file(api_client, &file_info.local_path, &file_info.remote_path, file_info.size as u64, &file_info.local_path).await;
-            println!("file uploaded {}", file_info.remote_path);
+            println!("file uploaded   {}", file_info.remote_path);
           }
         },
         "folder" => {
           if !file_exists.exists {
+            println!("creating dir    {}", file_info.remote_path);
             api_client.create_folder(&file_info.remote_path).await.unwrap();
-            println!("dir created {}", file_info.remote_path);
+            println!("dir created     {}", file_info.remote_path);
           }
         },
         _ => {}
@@ -256,16 +258,18 @@ async fn sync_file(file_info: &objects::FileObj, api_client: &api_conn::ApiClien
     let file_exists = file_conn::file_exists(file_info.local_path.as_str());
     match file_info.r#type.as_str() {
         "file" => {
-          if file_exists {
+          if !file_exists {
+            println!("file downloading {}", file_info.local_path);
             let mut file_local = file_conn::create_file_stream(&file_info.local_path);
             let _ = api_client.get_file(&file_info.remote_path, &mut file_local).await;
-            println!("file downloaded {}", file_info.local_path);
+            println!("file downloaded  {}", file_info.local_path);
           }
         },
         "folder" => {
-          if file_exists {
+          if !file_exists {
+            println!("creating dir     {}", file_info.local_path);
             file_conn::create_dir(&file_info.local_path);
-            println!("dir created {}", file_info.local_path);
+            println!("dir created      {}", file_info.local_path);
           }
         },
         _ => {}
