@@ -29,7 +29,10 @@ async fn get_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, vi
 
   if virtual_path.is_empty() {
     virtual_local_path = local_path.clone();
-    virtual_remote_path = remote_path.clone();    
+    virtual_remote_path = remote_path.clone();
+    if !api_client.exists_file(&virtual_remote_path).await.unwrap().exists {
+      file_conn::create_dir(&virtual_local_path);
+    }
   } else {
     virtual_local_path = utils::create_path(local_path, virtual_path);
     virtual_remote_path = utils::create_path(remote_path, virtual_path);
@@ -92,7 +95,10 @@ async fn send_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient, v
 
   if virtual_path.is_empty() {
     virtual_local_path = local_path.clone();
-    virtual_remote_path = remote_path.clone();    
+    virtual_remote_path = remote_path.clone();
+    if !api_client.exists_file(&virtual_remote_path).await.unwrap().exists {
+      let _ = api_client.create_folder(&virtual_remote_path).await.unwrap();
+    }
   } else {
     virtual_local_path = utils::create_path(local_path, virtual_path);
     virtual_remote_path = utils::create_path(remote_path, virtual_path);
@@ -145,7 +151,25 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
 
   if virtual_path.is_empty() {
     virtual_local_path = local_path.clone();
-    virtual_remote_path = remote_path.clone();    
+    virtual_remote_path = remote_path.clone();
+    if !file_conn::file_exists(&virtual_local_path) {
+      tasks_files.push(objects::FileObj {
+        action: "get".to_string(),
+        remote_path: virtual_remote_path.clone(),
+        local_path: virtual_local_path.clone(),
+        size: 1024,
+        r#type: "folder".to_string()
+      });
+    }
+    if !api_client.exists_file(&virtual_remote_path).await.unwrap().exists {
+      tasks_files.push(objects::FileObj {
+        action: "send".to_string(),
+        remote_path: virtual_remote_path.clone(),
+        local_path: virtual_local_path.clone(),
+        size: 1024,
+        r#type: "folder".to_string()
+      });
+    }
   } else {
     virtual_local_path = utils::create_path(local_path, virtual_path);
     virtual_remote_path = utils::create_path(remote_path, virtual_path);
