@@ -31,8 +31,9 @@ pub fn load_config(file_name: &String) -> Result<objects::Configfile> {
     valid = false;
   }
 
-  if info.jobs > 30 {
+  if info.jobs > 33 {
     valid = false;
+    println!("invalid num of threads, max threads is 32")
   }
 
   for dir in info.dirs.iter() {
