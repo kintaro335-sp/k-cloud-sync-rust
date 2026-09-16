@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 use reqwest::{Client, StatusCode, multipart};
-use std::{os::unix::fs::FileExt};
+use std::{clone, os::unix::fs::FileExt};
 // use std::time::Duration;
 use thiserror::Error;
 use std::fs;
@@ -42,6 +42,7 @@ pub enum ApiError {
 }
 
 /// Cliente de API con configuración (timeout, headers, etc.).
+#[derive(Clone)]
 pub struct ApiClient {
     base: Url,
     api_key: String,

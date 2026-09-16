@@ -16,6 +16,7 @@ pub mod core {
     pub mod engine;
     pub mod utils;
     pub mod args_parse;
+    pub mod multi_thr;
 }
 
 
@@ -108,17 +109,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match args_input.mode.as_str() {
       "all" => {
         for dir in dirs.iter() {
-          match core::engine::sync_files(&dir, &api_client).await {
+          match core::engine::sync_files(&dir, &api_client, &config.jobs).await {
             Ok(message) => println!("{}", message),
             Err(err) => println!("Error: {}", err),
           }
         }
       },
-      "single" => {
-        let dir = dirs.get(args_input.dir as usize);
-        match dir {
+      "some" => {
+        for dir in args_input.dirs {
+          let dir = dirs.get(dir as usize);
+          match dir {
             Some(dir_f) => {
-              match core::engine::sync_files(&dir_f, &api_client).await {
+              match core::engine::sync_files(&dir_f, &api_client, &config.jobs).await {
                 Ok(message) => println!("{}", message),
                 Err(err) => println!("Error: {}", err),
               }
@@ -126,6 +128,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             None => {
               println!("this dir does not exixts");
             }
+          }
         }
       },
       _ => {}

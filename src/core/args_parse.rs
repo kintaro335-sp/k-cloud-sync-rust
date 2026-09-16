@@ -4,6 +4,7 @@
  * MIT Licensed
  */
 use std::env;
+use std::println;
 use std::process;
 
 use crate::core::utils;
@@ -12,7 +13,7 @@ pub struct ArgsInput {
   pub action: String,
   pub mode: String,
   pub file: String,
-  pub dir: u16
+  pub dirs: Vec<u16>
 }
 
 struct ParseResult {
@@ -76,7 +77,7 @@ pub fn get_args_input() -> ArgsInput {
     action: String::from("sync"),
     mode: String::from("all"),
     file: String::from(""),
-    dir: 0
+    dirs: [0].to_vec()
   };
 
   for (i, arg) in args {
@@ -90,14 +91,20 @@ pub fn get_args_input() -> ArgsInput {
         },
         3 => {
           let arg_val = arg.clone();
-          let value_num = parse_to_number(&arg_val);
-          if value_num.success {
-            args_input.mode = String::from("single");
-            args_input.dir = value_num.value;
-          } else {
-            println!("Error: invalid dir option");
+          let arg_str_indexes = arg_val.split(",");
+          let mut arg_num_indexes: Vec<u16> = Vec::new();
+          for arg_str in arg_str_indexes {
+            let index_num_result = parse_to_number(&arg_str.to_string());
+            if index_num_result.success {
+              arg_num_indexes.push(index_num_result.value);
+            }
+          }
+          args_input.mode = String::from("some");
+          if arg_num_indexes.len() == 0 {
+            println!("Error: invalid dir options");
             process::exit(1);
           }
+          args_input.dirs = arg_num_indexes;
         },
         _ => {}
       }

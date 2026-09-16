@@ -31,6 +31,10 @@ pub fn load_config(file_name: &String) -> Result<objects::Configfile> {
     valid = false;
   }
 
+  if info.jobs > 30 {
+    valid = false;
+  }
+
   for dir in info.dirs.iter() {
     if dir.remote_path.trim().is_empty() {
       valid = false;
