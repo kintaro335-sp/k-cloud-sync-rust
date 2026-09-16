@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 use reqwest::{Client, StatusCode, multipart};
-use std::{clone, os::unix::fs::FileExt};
+use std::{os::unix::fs::FileExt};
 // use std::time::Duration;
 use thiserror::Error;
 use std::fs;

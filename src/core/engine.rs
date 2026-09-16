@@ -5,7 +5,7 @@
  */
 
 use std::{println};
-use crate::core::{file_conn::{self, file_exists}, utils::{self}};
+use crate::core::{file_conn::{self}, utils::{self}};
 use async_recursion::async_recursion;
 use tokio::task;
 pub use crate::core::objects;
@@ -324,7 +324,7 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
     }
 
     for handle in handles {
-      let r = handle.await.unwrap().await;
+      let _ = handle.await.unwrap().await;
     }
 
     // TODO: add code to multithreading
