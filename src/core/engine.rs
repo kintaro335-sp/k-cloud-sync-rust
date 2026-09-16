@@ -275,9 +275,6 @@ async fn sync_file(file_info: &objects::FileObj, api_client: &api_conn::ApiClien
   Ok(())
 } 
 
-// TODO: functions to list the files to sync
-// TODO: function to sync file
-
 // end code for multi thread
 
 // main function
@@ -300,8 +297,6 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
       let _ = send_files(dir, api_client, "").await;
     }
   } else {
-    // TODO: generate the list of files todo
-
     let tasks_files: Vec<objects::FileObj>;
 
     tasks_files = get_plan(&dir, api_client).await;
@@ -327,7 +322,6 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
       let _ = handle.await.unwrap().await;
     }
 
-    // TODO: add code to multithreading
   }
 
   Ok(String::from("sync finished"))  
