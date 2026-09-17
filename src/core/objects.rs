@@ -12,7 +12,7 @@ pub struct Dirsync {
   pub sync_mode: String,
 }
 
-fn default_jobs_num() -> u16 {
+fn default_jobs_num() -> usize {
   1
 }
 
@@ -22,7 +22,7 @@ pub struct Configfile {
   pub api_key: String,
   pub dirs: Vec<Dirsync>,
   #[serde(default = "default_jobs_num")]
-  pub jobs: u16,
+  pub jobs: usize,
 }
 
 #[derive(Debug, Deserialize)]

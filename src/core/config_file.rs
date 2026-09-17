@@ -31,9 +31,12 @@ pub fn load_config(file_name: &String) -> Result<objects::Configfile> {
     valid = false;
   }
 
-  if info.jobs > 33 {
+  let hilos = std::thread::available_parallelism()
+    .map(|p| p.get())
+    .unwrap_or(1);  
+  if info.jobs > hilos as usize {
     valid = false;
-    println!("invalid num of threads, max threads is 32")
+    println!("invalid num of threads, max threads is {}", hilos);
   }
 
   for dir in info.dirs.iter() {

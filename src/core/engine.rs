@@ -4,10 +4,10 @@
  * MIT Licensed
  */
 
-use std::{println};
+use std::{thread};
+use tokio::runtime::Handle;
 use crate::core::{file_conn::{self}, utils::{self}};
 use async_recursion::async_recursion;
-use tokio::task;
 pub use crate::core::objects;
 pub use crate::core::api_conn;
 pub use crate::core::multi_thr;
@@ -256,23 +256,23 @@ async fn get_plan(dirs: &objects::Dirsync, api_client: &api_conn::ApiClient) -> 
 }
 
 
-async fn sync_file(file_info: &objects::FileObj, api_client: &api_conn::ApiClient) -> Result<(), Box<dyn std::error::Error>> {
+async fn sync_file(thread_id: usize, file_info: &objects::FileObj, api_client: &api_conn::ApiClient) -> Result<(), Box<dyn std::error::Error>> {
 
   if file_info.action == "send" {
     let file_exists = api_client.exists_file(&file_info.remote_path).await.unwrap();
     match file_info.r#type.as_str() {
         "file" => {
           if !file_exists.exists {
-            println!("uploading file  {}", file_info.remote_path);
+            println!("({}) uploading file  {}", thread_id, file_info.remote_path);
             upload_file(api_client, &file_info.local_path, &file_info.remote_path, file_info.size as u64, &file_info.local_path).await;
-            println!("file uploaded   {}", file_info.remote_path);
+            println!("({}) file uploaded   {}", thread_id, file_info.remote_path);
           }
         },
         "folder" => {
           if !file_exists.exists {
-            println!("creating dir    {}", file_info.remote_path);
+            println!("({}) creating dir    {}", thread_id, file_info.remote_path);
             api_client.create_folder(&file_info.remote_path).await.unwrap();
-            println!("dir created     {}", file_info.remote_path);
+            println!("({}) dir created     {}", thread_id, file_info.remote_path);
           }
         },
         _ => {}
@@ -307,7 +307,7 @@ async fn sync_file(file_info: &objects::FileObj, api_client: &api_conn::ApiClien
 
 // main function
 
-pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient, jobs: &u16) -> Result<String, Box<dyn std::error::Error>> {
+pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient, jobs: &usize) -> Result<String, Box<dyn std::error::Error>> {
   let sync_mode = &dir.sync_mode;
   let remote_path = &dir.remote_path;
 
@@ -331,23 +331,25 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
     
     let tail_tasks = multi_thr::TailTasks::new(tasks_files);
 
-    let mut handles= Vec::new();
+    let mut threads= Vec::new();
 
-    for _ in 1..*jobs {
+    for id in 0..*jobs {
       let shared_tail = tail_tasks.clone();
       let api_conn_clone = api_client.clone();
-
-      let handle = task::spawn_blocking(async move || {
+      let hanlde = Handle::current();
+      let thr = thread::spawn(move || {
+        
         while let Some(file) = shared_tail.take_task() {
-            sync_file(&file, &api_conn_clone).await.unwrap();
+            let result = hanlde.block_on(sync_file(id, &file, &api_conn_clone));
+            result.unwrap();
         }
       });
 
-      handles.push(handle);
+      threads.push(thr);
     }
 
-    for handle in handles {
-      let _ = handle.await.unwrap().await;
+    for handle in threads {
+      let _ = handle.join().unwrap();
     }
 
   }
