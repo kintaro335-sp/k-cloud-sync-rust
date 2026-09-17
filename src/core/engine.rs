@@ -200,7 +200,7 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
         let mut sub_dir_tasks = get_tasks_files(dirs, api_client, &utils::create_path(virtual_path, &virtual_path_file), Vec::new()).await.unwrap();
         tasks_files.append(&mut sub_dir_tasks);
       } else {
-        if exists_file_remote {
+        if !exists_file_remote {
           tasks_files.push(objects::FileObj {
             action: "send".to_string(),
             remote_path: remote_path_file.clone(),
