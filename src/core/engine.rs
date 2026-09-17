@@ -274,17 +274,17 @@ async fn sync_file(thread_id: usize, file_info: &objects::FileObj, api_client: &
     match file_info.r#type.as_str() {
         "file" => {
           if !file_exists {
-            println!("file downloading {}", file_info.local_path);
+            println!("({}) file downloading {}", thread_id, file_info.local_path);
             let mut file_local = file_conn::create_file_stream(&file_info.local_path);
             let _ = api_client.get_file(&file_info.remote_path, &mut file_local).await;
-            println!("file downloaded  {}", file_info.local_path);
+            println!("({}) file downloaded  {}", thread_id, file_info.local_path);
           }
         },
         "folder" => {
           if !file_exists {
-            println!("creating dir     {}", file_info.local_path);
+            println!("({}) creating dir     {}", thread_id, file_info.local_path);
             file_conn::create_dir(&file_info.local_path);
-            println!("dir created      {}", file_info.local_path);
+            println!("({}) dir created      {}", thread_id, file_info.local_path);
           }
         },
         _ => {}
@@ -317,9 +317,15 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
     }
   } else {
     let tasks_files: Vec<objects::FileObj>;
+    
+    println!("planning sync...");
 
     tasks_files = get_plan(&dir, api_client).await;
-    
+
+    let files_to_sync = tasks_files.len();
+
+    println!("files to sync: {}", files_to_sync);
+
     let tail_tasks = multi_thr::TailTasks::new(tasks_files);
 
     let mut threads= Vec::new();
@@ -328,26 +334,28 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
       let shared_tail = tail_tasks.clone();
       let api_conn_clone = api_client.clone();
       let hanlde = Handle::current();
+      println!("starting worker {}", id);
       let thr = thread::spawn(move || {
         
         while let Some(file) = shared_tail.take_task() {
-            let mut retries: u8 = 0;
-            let mut success: bool = false;
-            while retries < 3 && !success {
-              let result = hanlde.block_on(sync_file(id, &file, &api_conn_clone));
-              match result {
-                  Ok(_) => {
-                    success = true;
-                  },
-                  Err(_) => {
-                    println!("retriying {}", file.remote_path);
-                    retries += 1;
-                  }
-              }
+          let mut retries: u8 = 0;
+          let mut success: bool = false;
+          while retries < 3 && !success {
+            let result = hanlde.block_on(sync_file(id, &file, &api_conn_clone));
+            match result {
+                Ok(_) => {
+                  success = true;
+                },
+                Err(_) => {
+                  println!("retriying {}", file.remote_path);
+                  retries += 1;
+                }
             }
-            
+          }   
         }
+        println!("worker {} finished", id);
       });
+      println!("worker {} started", id);
 
       threads.push(thr);
     }
