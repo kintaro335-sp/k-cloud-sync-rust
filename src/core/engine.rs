@@ -177,6 +177,7 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
 
   if action == "send" || action == "bidirectional" {
     let files_local_list = file_conn::file_list(&virtual_local_path);
+    let files_remote_list= api_client.get_files_list(&virtual_remote_path).await.unwrap();
     for file in files_local_list {
       let virtual_path_file = &utils::create_path(virtual_path, &file);
       let local_path_file = &utils::create_path(&virtual_local_path, &file);
@@ -184,10 +185,10 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
 
       let is_dir = file_conn::is_dir(local_path_file).unwrap();
       let file_size = file_conn::get_file_size(local_path_file).unwrap();
-      let file_remote_exists = api_client.exists_file(&remote_path_file).await.unwrap();
+      let exists_file_remote = utils::exists_file_remote(&files_remote_list, &file);
 
       if is_dir {
-        if !file_remote_exists.exists {
+        if !exists_file_remote {
           tasks_files.push(objects::FileObj { 
             action: "send".to_string(),
             remote_path: remote_path_file.clone(),
@@ -199,13 +200,15 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
         let mut sub_dir_tasks = get_tasks_files(dirs, api_client, &utils::create_path(virtual_path, &virtual_path_file), Vec::new()).await.unwrap();
         tasks_files.append(&mut sub_dir_tasks);
       } else {
-        tasks_files.push(objects::FileObj {
-          action: "send".to_string(),
-          remote_path: remote_path_file.clone(),
-          local_path: local_path_file.clone(),
-          size: file_size.clone() as usize,
-          r#type: "file".to_string()
-        });
+        if exists_file_remote {
+          tasks_files.push(objects::FileObj {
+            action: "send".to_string(),
+            remote_path: remote_path_file.clone(),
+            local_path: local_path_file.clone(),
+            size: file_size.clone() as usize,
+            r#type: "file".to_string()
+          });
+        }
       }
 
     }
@@ -235,7 +238,7 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
           tasks_files.append(&mut sub_dir_tasks);
         }
       } else {
-        if !file_conn::file_exists(&file_virtual_path_local) {
+        if !file_local_exists {
           tasks_files.push(objects::FileObj {
             action: "get".to_string(),
             remote_path: file_virtual_path_server.clone(),
