@@ -153,22 +153,10 @@ async fn get_tasks_files(dirs: &objects::Dirsync, api_client: &api_conn::ApiClie
     virtual_local_path = local_path.clone();
     virtual_remote_path = remote_path.clone();
     if !file_conn::file_exists(&virtual_local_path) {
-      tasks_files.push(objects::FileObj {
-        action: "get".to_string(),
-        remote_path: virtual_remote_path.clone(),
-        local_path: virtual_local_path.clone(),
-        size: 1024,
-        r#type: "folder".to_string()
-      });
+      file_conn::create_dir(&virtual_local_path);
     }
     if !api_client.exists_file(&virtual_remote_path).await.unwrap().exists {
-      tasks_files.push(objects::FileObj {
-        action: "send".to_string(),
-        remote_path: virtual_remote_path.clone(),
-        local_path: virtual_local_path.clone(),
-        size: 1024,
-        r#type: "folder".to_string()
-      });
+      api_client.create_folder(&virtual_remote_path).await.unwrap();
     }
   } else {
     virtual_local_path = utils::create_path(local_path, virtual_path);
@@ -343,8 +331,21 @@ pub async fn sync_files(dir: &objects::Dirsync, api_client: &api_conn::ApiClient
       let thr = thread::spawn(move || {
         
         while let Some(file) = shared_tail.take_task() {
-            let result = hanlde.block_on(sync_file(id, &file, &api_conn_clone));
-            result.unwrap();
+            let mut retries: u8 = 0;
+            let mut success: bool = false;
+            while retries < 3 && !success {
+              let result = hanlde.block_on(sync_file(id, &file, &api_conn_clone));
+              match result {
+                  Ok(_) => {
+                    success = true;
+                  },
+                  Err(_) => {
+                    println!("retriying {}", file.remote_path);
+                    retries += 1;
+                  }
+              }
+            }
+            
         }
       });
 
